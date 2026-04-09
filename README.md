@@ -15,6 +15,9 @@
 
 Запрос должен быть отправлен методом `POST`. 
 
+## Формат тела запроса
+Валидный JSON
+
 
 ### ❌ Ошибки в запросе (HTTP_CODE: 400, 401, 405)
 
@@ -148,56 +151,48 @@
 }
 ```
 
-Во всех ответах HTTP статус идентичен параметру `error`, кроме успешной фиксации. Например, не отправили номер телефона агента, в ответе получили `{... "error": 400, ...}`, значит и HTTP статус тоже 400.
-
-При успешной фиксации 
-```diff 
-+ HTTP статус - 200
-```
-параметр `error` не возвращается.
-
-В параметре `message` возвращается полное описание ошибки
 
 
 # Curl пример запроса
 ```diff
-- Внимание! Есть обязательные параметры в запросе
+- Внимание! Все параметры в запросе обязательны
 ```
 
 ```php
-$endpoint = 'xxx/local/samoliot-app/lead-fixation/fixation/v2/';
+$endpoint = 'xxx/api/lead-fixation/create';
 
 $params = [
-    "phone" => "+7 (912) 000-00-11", // Номер телефона клиента, любой формат номера телефона, но состоящий из 11 цифр (обязательный)
-    "surname" => "Безфамильный", // Фамилия клиента (обязательный)
-    "name" => "Безимян", // Имя клиента (обязательный)
-    "middleName" => "Безотчествович", // Отчество клиента
-    "agency" => "Ми-6", // Название агентства (обязательный)
     "agent" => [
-        "name" => "Агент Джеймс Бонд 007", // Имя агента (обязательный)
-        "phone" => "7 900 232 52-23", // Телефон агента, любой формат номера телефона, но состоящий из 11 цифр (обязательный)
+        "name" => "Джеймс Бонд 007",  // мин 5 символов
+        "phone" => "+7 (900) 000-11-44" // любой формат номера телефона, но состоящий из 11 цифр
     ],
+    "client" => [
+        "phone" => "7-900-0001133", // любой формат номера телефона, но состоящий из 11 цифр
+        "name" => "Иванов Иван Иванович", // мин 5 символов
+    ]
 ];
 
 // Заголовки
 $headers = [
-    'Accept: application/json', // формат JSON
-    'Content-Type: application/json', // формат JSON
-    'X-AGENT-TOKEN: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx'
+    'Accept: application/json',
+    'Content-Type: application/json',
+    'x-token: xxxxxxxxxxxxxxxx'
 ];
 
 
 $curl = curl_init();
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($curl, CURLOPT_URL, $endpoint.'?'.http_build_query($params));
+curl_setopt($curl, CURLOPT_POST, 1);
+curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+curl_setopt($curl, CURLOPT_URL, $endpoint);
+curl_setopt($curl, CURLOPT_HEADER, 0);
 curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10); // рекомендуемые таймауты 10
+curl_setopt($curl, CURLOPT_TIMEOUT, 10); // рекомендуемые таймауты 10
 
 $result = json_decode(curl_exec($curl), true);
-if (curl_errno($curl)) {
-    echo 'Ошибка cURL: ' . curl_error($curl);
-}
-
-$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE); // получим HTTP статус
+$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+$curl_errno = curl_errno($curl);
 curl_close($curl);
 
 echo "http code: $http_code<br><br><br>";
