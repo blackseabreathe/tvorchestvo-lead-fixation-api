@@ -4,7 +4,7 @@
 ## Общая структура ответа
 ```
 {
-  "success": boolean
+  "success": boolean                                          // true при http_code 200, false при остальных http_code
   "error": string                                             // При ошибке будет содержаться текст в данном параметре
   "unique": boolean                                           // Индикатор уникальности
   "unique_until": null|string                                 // Дата фиксации лида, возвращается строка вида YYYY-MM-DD, если в лиде заполнено поле или null в противном случае
